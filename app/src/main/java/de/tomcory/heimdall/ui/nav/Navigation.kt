@@ -8,6 +8,7 @@ import de.tomcory.heimdall.R
 import de.tomcory.heimdall.ui.apps.AppsScreen
 import de.tomcory.heimdall.ui.apps.PermissionsScreen
 import de.tomcory.heimdall.ui.database.DatabaseScreen
+import de.tomcory.heimdall.ui.telemetry.TelemetryScreen
 import de.tomcory.heimdall.ui.traffic.TrafficScreen
 
 /**
@@ -21,6 +22,7 @@ sealed class NavigationItem(var route: String, var unselectedIcon: Int, var sele
     data object Traffic : NavigationItem("traffic", R.drawable.ic_m3_traffic_24px, R.drawable.ic_m3_traffic_filled_24px, "Traffic")
     data object Apps : NavigationItem("apps", R.drawable.ic_m3_apps_24px, R.drawable.ic_m3_apps_24px, "Apps")
     data object Database : NavigationItem("database", R.drawable.ic_m3_database_24px, R.drawable.ic_m3_database_24px, "Database")
+    data object Telemetry : NavigationItem("telemetry", R.drawable.ic_m3_database_24px, R.drawable.ic_m3_database_24px, "Telemetry")
 }
 
 /**
@@ -29,7 +31,9 @@ sealed class NavigationItem(var route: String, var unselectedIcon: Int, var sele
 val navigationItems = listOf(
     NavigationItem.Traffic,
     NavigationItem.Apps,
-    NavigationItem.Database
+    NavigationItem.Database,
+    NavigationItem.Telemetry,
+
 )
 
 @Composable
@@ -48,6 +52,11 @@ fun Navigation(navController: NavHostController) {
         composable(NavigationItem.Database.route) {
             DatabaseScreen()
         }
+
+        composable(NavigationItem.Telemetry.route) {
+            TelemetryScreen()
+        }
+
 
         /*
          * Add other destinations, e.g. nested screens, here.
