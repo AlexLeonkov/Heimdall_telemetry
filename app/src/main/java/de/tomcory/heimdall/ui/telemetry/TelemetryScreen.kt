@@ -11,31 +11,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.tomcory.heimdall.persistence.database.HeimdallDatabase
+import de.tomcory.heimdall.telemetry.TelemetryExport
+
 
 @Composable
 fun TelemetryScreen() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(16.dp)
-    ) {
-        var isToggleOn by remember { mutableStateOf(false) }
+    val requestDao = HeimdallDatabase.instance?.requestDao
+    if (requestDao != null) {
+        val telemetryExport = remember { TelemetryExport(requestDao) }
+        Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+        ) {
+            var isToggleOn by remember { mutableStateOf(false) }
 
-        Text("Telemetry Data")
+            Text("Telemetry Data")
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-        Text(text = "Toggle Telemetry:")
-        Switch(
-            checked = isToggleOn,
-            onCheckedChange = { isToggleOn = it }
-        )
+            Text(text = "Toggle Telemetry:")
+            Switch(
+                    checked = isToggleOn,
+                    onCheckedChange = {
+                        isToggleOn = it
+                        if (it) {
 
-        Spacer(modifier = Modifier.height(10.dp))
+                       telemetryExport.exportDataToServer()
+                        }
+                    }
+            )
 
-        Text(text = if (isToggleOn) "Telemetry: ON" else "Telemetry: OFF")
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(text = if (isToggleOn) "Telemetry: ON" else "Telemetry: OFF")
+        }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun TelemetryScreenPreview() {
