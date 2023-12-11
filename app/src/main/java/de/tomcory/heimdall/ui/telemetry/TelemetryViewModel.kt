@@ -39,11 +39,12 @@ class TelemetryViewModel() : ViewModel() {
     }
 
     private val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.x.x:your_port/") // Replace with your server IP and port
+            .baseUrl("http://192.168.0.219:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-   private val apiService: ApiService = retrofit.create(ApiService::class.java)
+
+    private val apiService: ApiService = retrofit.create(ApiService::class.java)
 
 
 
@@ -94,6 +95,9 @@ class TelemetryViewModel() : ViewModel() {
 
             // Insert the fake request into the database
             db?.requestDao?.insert(fakeRequest)
+
+
+            exportTelemetryData()
 
             // Create a fake response corresponding to the fake request
             val fakeResponse = EntityResponse(
