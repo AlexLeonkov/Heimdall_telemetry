@@ -39,7 +39,7 @@ class TelemetryViewModel() : ViewModel() {
     }
 
     private val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.0.219:8080/")
+            .baseUrl("http://192.168.2.164:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -49,11 +49,19 @@ class TelemetryViewModel() : ViewModel() {
 
 
 
-
+    private var lastSentTimestamp: Long = 0
     fun exportTelemetryData() {
         viewModelScope.launch {
             requests?.collect { listOfRequests ->
-                listOfRequests.forEach { request ->
+
+                // Filter the requests to only those that haven't been sent yet
+                val unsentRequests = listOfRequests.filter {
+                    it.timestamp > lastSentTimestamp
+                }
+
+
+
+                unsentRequests.forEach { request ->
                     try {
                         val response = apiService.sendRequest(request)
                         if (response.isSuccessful) {
