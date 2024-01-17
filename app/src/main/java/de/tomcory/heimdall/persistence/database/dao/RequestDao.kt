@@ -28,4 +28,9 @@ interface RequestDao {
 
     @Query("Select * FROM Request")
     fun getAllObservable(): Flow<List<Request>>
+
+
+    @Query("SELECT * FROM Request WHERE timestamp > :lastSentTimestamp")
+    suspend fun getUnsentRequests(lastSentTimestamp: Long): List<Request>
+
 }

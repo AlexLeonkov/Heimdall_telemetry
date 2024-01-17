@@ -20,43 +20,61 @@ import de.tomcory.heimdall.ui.database.DatabaseViewModel
 
 
 @Composable
+
 fun TelemetryScreen(viewModel: TelemetryViewModel = viewModel()) {
     val requestDao = HeimdallDatabase.instance?.requestDao
     if (requestDao != null) {
-
         Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(16.dp)
         ) {
-            var isToggleOn by remember { mutableStateOf(false) }
+            var isFullyAnonymized by remember { mutableStateOf(false) }
+            var isNoIpTimestamps by remember { mutableStateOf(false) }
+            var isDisclosedContent by remember { mutableStateOf(false) }
 
             Text("Telemetry Data")
 
             Spacer(modifier = Modifier.height(20.dp))
-            
-            
-            Button(onClick = {   viewModel.createFakeData()}) {
-                Text(text = "create fake data")
+
+            Button(onClick = { viewModel.createFakeData() }) {
+                Text(text = "Create Fake Data")
             }
 
-            Text(text = "Toggle Telemetry:")
-            Switch(
-                    checked = isToggleOn,
-                    onCheckedChange = {
-                        isToggleOn = it
-                        if (it) {
+            Spacer(modifier = Modifier.height(10.dp))
 
-                       viewModel.exportTelemetryData()
-                        }
-                    }
+            Text(text = "Fully Anonymized Data:")
+            Switch(
+                    checked = isFullyAnonymized,
+                    onCheckedChange = { isFullyAnonymized = it }
+            )
+
+            Text(text = "No IP/Timestamps:")
+            Switch(
+                    checked = isNoIpTimestamps,
+                    onCheckedChange = { isNoIpTimestamps = it }
+            )
+
+            Text(text = "Disclosed Content:")
+            Switch(
+                    checked = isDisclosedContent,
+                    onCheckedChange = { isDisclosedContent = it }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(text = if (isToggleOn) "Telemetry: ON" else "Telemetry: OFF")
+            Button(onClick = {
+                var options = 0
+                if (isFullyAnonymized) options = options or TelemetryViewModel.FULLY_ANONYMIZED
+                if (isNoIpTimestamps) options = options or TelemetryViewModel.NO_IP_TIMESTAMPS
+                if (isDisclosedContent) options = options or TelemetryViewModel.DISCLOSED_CONTENT
+                viewModel.exportTelemetryData(options)
+            }) {
+                Text(text = "Export Telemetry Data")
+            }
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun TelemetryScreenPreview() {

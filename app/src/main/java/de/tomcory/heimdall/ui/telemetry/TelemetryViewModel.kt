@@ -33,6 +33,13 @@ class TelemetryViewModel() : ViewModel() {
     val requests: Flow<List<EntityRequest>>? = db?.requestDao?.getAllObservable()
     val responses: Flow<List<EntityResponse>>? = db?.responseDao?.getAllObservable()
 
+
+    companion object {
+        const val FULLY_ANONYMIZED = 1 shl 0
+        const val NO_IP_TIMESTAMPS = 1 shl 1
+        const val DISCLOSED_CONTENT = 1 shl 2
+    }
+
     interface ApiService {
         @POST("post")
         suspend fun sendRequest(@Body requestData: EntityRequest): Response<Unit>
@@ -48,35 +55,78 @@ class TelemetryViewModel() : ViewModel() {
 
 
 
+    fun anonymiseData(request: EntityRequest, options: Int): EntityRequest {
+        // Clone the original request to avoid modifying the original object
+        var anonymisedRequest = request.copy()
+
+        if (options and FULLY_ANONYMIZED != 0) {
+            // Implement FULLY_ANONYMIZED logic
+            anonymisedRequest = anonymisedRequest.copy(
+                    remoteIp = "0.0.0.0", // Use a dummy IP address
+                    remotePort = -1,       // Use a special value to indicate anonymization
+                    localIp = "0.0.0.0",   // Use a dummy IP address
+                    localPort = -1         // Use a special value to indicate anonymization
+                    // Set other fields to anonymized values as necessary
+            )
+        }
+
+        if (options and NO_IP_TIMESTAMPS != 0) {
+            // Implement NO_IP_TIMESTAMPS logic
+            anonymisedRequest = anonymisedRequest.copy(
+                    remoteIp = "0.0.0.0", // Use a dummy IP address
+                    remotePort = -1,       // Use a special value to indicate anonymization
+                    timestamp = -1         // Use a special value to indicate anonymization
+            )
+        }
+
+
+        if (options and DISCLOSED_CONTENT != 0) {
+            // Implement DISCLOSED_CONTENT logic
+            anonymisedRequest = anonymisedRequest.copy(
+                    content = "Content is disclosed"
+                    // Modify as necessary for disclosed content
+            )
+        }
+
+        return anonymisedRequest
+    }
+
 
     private var lastSentTimestamp: Long = 0
-    fun exportTelemetryData() {
+    fun exportTelemetryData(options: Int) {
         viewModelScope.launch {
-            requests?.collect { listOfRequests ->
+            // Retrieve unsent requests that are newer than the last sent timestamp
+            val unsentRequests = db?.requestDao?.getUnsentRequests(lastSentTimestamp)
 
-                // Filter the requests to only those that haven't been sent yet
-                val unsentRequests = listOfRequests.filter {
-                    it.timestamp > lastSentTimestamp
-                }
+            // Track the timestamp of the most recently sent request
+            var mostRecentSentTimestamp = lastSentTimestamp
 
-
-
-                unsentRequests.forEach { request ->
-                    try {
-                        val response = apiService.sendRequest(request)
-                        if (response.isSuccessful) {
-                            Timber.d("Data sent successfully")
-                        } else {
-                            Timber.e("Error sending data")
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to send data")
+            unsentRequests?.forEach { request ->
+                val anonymisedRequest = anonymiseData(request, options)
+                try {
+                    val response = apiService.sendRequest(anonymisedRequest)
+                    if (response.isSuccessful) {
+                        Timber.d("Data sent successfully")
+                        // Update the most recent sent timestamp
+                        mostRecentSentTimestamp = maxOf(mostRecentSentTimestamp, request.timestamp)
+                    } else {
+                        Timber.e("Error sending data")
                     }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to send data")
                 }
             }
+
+            // After all requests have been processed, update the last sent timestamp
+            if (mostRecentSentTimestamp != lastSentTimestamp) {
+                lastSentTimestamp = mostRecentSentTimestamp
+                // Optionally, persist the lastSentTimestamp to storage to maintain state across app restarts
+                // saveLastSentTimestamp(lastSentTimestamp)
+            }
         }
-        Timber.d("it worked")
     }
+
+
 
 
     fun createFakeData() {
@@ -104,8 +154,9 @@ class TelemetryViewModel() : ViewModel() {
             // Insert the fake request into the database
             db?.requestDao?.insert(fakeRequest)
 
-
-            exportTelemetryData()
+//todo
+            val options = FULLY_ANONYMIZED or NO_IP_TIMESTAMPS
+            exportTelemetryData(options)
 
             // Create a fake response corresponding to the fake request
             val fakeResponse = EntityResponse(
