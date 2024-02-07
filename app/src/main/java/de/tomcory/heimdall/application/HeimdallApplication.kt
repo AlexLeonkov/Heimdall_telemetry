@@ -11,6 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+import android.content.Intent
+import androidx.core.content.ContextCompat
+import de.tomcory.heimdall.telemetry.TelemetryService
+
+
 class HeimdallApplication : Application() {
 
     override fun onCreate() {
@@ -35,6 +40,12 @@ class HeimdallApplication : Application() {
                 Timber.d("Database instance created")
             }
         }
+
+        //todo start service
+        val serviceIntent = Intent(this@HeimdallApplication, TelemetryService::class.java)
+        ContextCompat.startForegroundService(this@HeimdallApplication, serviceIntent)
+        Timber.d("TelemetryService started")
+
     }
 
     override fun onTerminate() {

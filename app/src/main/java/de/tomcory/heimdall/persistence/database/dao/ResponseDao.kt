@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import de.tomcory.heimdall.persistence.database.entity.Request
 import de.tomcory.heimdall.persistence.database.entity.Response
 import kotlinx.coroutines.flow.Flow
 
@@ -28,4 +29,7 @@ interface ResponseDao {
 
     @Query("Select * FROM Response")
     fun getAllObservable(): Flow<List<Response>>
+
+    @Query("SELECT * FROM Response WHERE timestamp > :lastSentTimestamp")
+    suspend fun getUnsentResponses(lastSentTimestamp: Long): List<Response>
 }

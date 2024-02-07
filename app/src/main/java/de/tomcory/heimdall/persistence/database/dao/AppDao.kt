@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import de.tomcory.heimdall.persistence.database.entity.App
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppDao {
@@ -16,4 +17,12 @@ interface AppDao {
 
     @Query("SELECT * FROM App")
     suspend fun getAll(): List<App>
+
+
+    @Query("SELECT * FROM App")
+    fun getAllObservable(): Flow<List<App>>
+    //todo rap to the flow
+
+    @Query("SELECT * FROM App WHERE packageName = :packageName LIMIT 1")
+    suspend fun getAppByPackageName(packageName: String): App?
 }
