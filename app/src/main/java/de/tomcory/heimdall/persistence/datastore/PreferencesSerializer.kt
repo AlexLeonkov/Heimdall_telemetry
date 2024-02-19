@@ -19,9 +19,11 @@ object PreferencesSerializer : Serializer<Preferences> {
         .setScanPermissionScannerEnable(true)
         .setScanLibraryScannerEnable(true)
         .setScanLibraryScannerPrepopulate(true)
-        .setIsFullyAnonymized(false) // if you want the default to be false
-        .setIsNoIpTimestamps(false) // if you want the default to be false
-        .setIsDisclosedContent(false)
+        .setAnonymizationFlags(1)
+
+
+
+
         .build()
 
     override suspend fun readFrom(input: InputStream): Preferences {

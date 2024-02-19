@@ -6,6 +6,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import de.tomcory.heimdall.persistence.database.entity.Connection
+import de.tomcory.heimdall.persistence.database.entity.Response
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ConnectionDao {
@@ -23,4 +25,7 @@ interface ConnectionDao {
 
     @Query("SELECT * FROM Connection")
     suspend fun getAll(): List<Connection>
+
+    @Query("Select * FROM Connection")
+    fun getAllObservable(): Flow<List<Connection>>
 }

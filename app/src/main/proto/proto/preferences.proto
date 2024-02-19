@@ -62,9 +62,8 @@ message Preferences {
   // list of blacklisted package names for the ScanManager
   repeated string scan_blacklisted_apps = 22;
 
-    bool is_fully_anonymized = 23;
-    bool is_no_ip_timestamps = 24;
-    bool is_disclosed_content = 25;
+  int32 anonymization_flags = 23;
+
 
   //todo add new
 }
