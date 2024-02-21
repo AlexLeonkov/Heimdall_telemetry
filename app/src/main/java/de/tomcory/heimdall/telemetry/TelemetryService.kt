@@ -13,10 +13,8 @@ import de.tomcory.heimdall.persistence.database.entity.Response as EntityRespons
 import de.tomcory.heimdall.persistence.database.entity.Connection as EntityConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.zip
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -24,16 +22,12 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import timber.log.Timber
 import java.util.UUID
-import de.tomcory.heimdall.Preferences
-import de.tomcory.heimdall.persistence.database.entity.Response
-
 import de.tomcory.heimdall.ui.main.preferencesStore
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
+
 
 
 
@@ -50,13 +44,15 @@ class TelemetryService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
     private val db: HeimdallDatabase? = HeimdallDatabase.instance
-//
+
+    //sorting out already sent data
     private var lastExportedRequestTimestamp: Long = 0
     private var lastExportedResponseTimestamp: Long = 0
     private var lastExportedConnectionTimestamp: Long = 0
 
     private val deviceIdentifier = UUID.randomUUID().toString()
 
+    //creating connecting with the server, change for the right ip
     private val retrofit: Retrofit = Retrofit.Builder()
             .baseUrl("http://172.20.10.2:8080/") // Replace with your server's base URL
             .addConverterFactory(GsonConverterFactory.create())
@@ -82,9 +78,8 @@ class TelemetryService : Service() {
         lastExportedConnectionTimestamp = sharedPreferences.getLong("lastExportedConnectionTimestamp", 0)
     }
 
+    //sorting out already sent apps data
     private val exportedAppsIdentifiers = mutableSetOf<String>()
-
-
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -128,7 +123,7 @@ class TelemetryService : Service() {
 
 
 
-
+//start listening on changes in the database
     private fun startDataCollection() {
         // Request data collection and export
         serviceScope.launch {
@@ -175,53 +170,14 @@ class TelemetryService : Service() {
         }.invokeOnCompletion { it?.let { error -> Timber.e(error, "Error in connection data collection") } }
     }
 
-// Continue with the rest of your implementation for export functions and anonymization logic...
 
 
-    //todo check if it works without
-//    private fun observeAndExportData() {
-//        serviceScope.launch {
-//            Timber.d("Starting to collect request data")
-//            db?.requestDao?.getAllObservable()?.collect { requests ->
-//                requests.forEach { request ->
-//                    exportRequestData(request, AnonymizationType.NONE)
-//                }
-//            }
-//            Timber.d("Finished collecting request data")
-//        }.invokeOnCompletion { it?.let { error -> Timber.e(error, "Error in request data collection") } }
-//
-//        serviceScope.launch {
-//            Timber.d("Starting to collect response data")
-//            db?.responseDao?.getAllObservable()?.collect { responses ->
-//                responses.forEach { response ->
-//                    exportResponseData(response, AnonymizationType.NONE)
-//                }
-//            }
-//            Timber.d("Finished collecting response data")
-//        }.invokeOnCompletion { it?.let { error -> Timber.e(error, "Error in response data collection") } }
-//
-//        serviceScope.launch {
-//            Timber.d("Starting to collect app data")
-//            db?.appDao?.getAllObservable()?.collect { apps ->
-//                apps.forEach { app ->
-//                    exportAppData(app, AnonymizationType.NONE)
-//                }
-//            }
-//            Timber.d("Finished collecting app data")
-//        }.invokeOnCompletion { it?.let { error -> Timber.e(error, "Error in app data collection") } }
-//    }
-//
-//
-
-
-    // Adjusted export function to include anonymization decision
+    // export function with anonymization decision
     private suspend fun exportRequestData(request: EntityRequest) {
-        // Directly use anonymizeRequest function to process the request based on anonymization type
 
-
-        // Proceed with sending the processed (potentially anonymized) request
+        // Proceed with sending the processed  request if wasn't sent
         if (request.timestamp > lastExportedRequestTimestamp) {
-
+            //anonymize the data
             val processedRequest = anonymizeRequest(request)
             try {
                 val response = apiService.sendRequestData(deviceIdentifier, currentAnonymizationType, processedRequest)
@@ -239,14 +195,9 @@ class TelemetryService : Service() {
     }
 
     private suspend fun exportResponseData(response: EntityResponse) {
-        // Directly use anonymizeRequest function to process the request based on anonymization type
-         val processedResponse = anonymizeResponse(response)
-
-        // Proceed with sending the processed (potentially anonymized) request
         if (response.timestamp > lastExportedResponseTimestamp) {
+            val processedResponse = anonymizeResponse(response)
             try {
-
-
                 val responseAPI = apiService.sendResponseData(deviceIdentifier, currentAnonymizationType,  processedResponse)
                 if (responseAPI.isSuccessful) {
                     Timber.d("Response data exported successfully")
@@ -263,10 +214,11 @@ class TelemetryService : Service() {
 
     private suspend fun exportConnectionData(connection: EntityConnection) {
         // Decide to anonymize based on the passed anonymization type
-        val processedConnection = anonymizeConnection(connection)
+
 
         // Proceed with sending the processed (potentially anonymized) connection
-        if (processedConnection.initialTimestamp > lastExportedConnectionTimestamp) {
+        if (connection.initialTimestamp > lastExportedConnectionTimestamp) {
+            val processedConnection = anonymizeConnection(connection)
             try {
                 val response = apiService.sendConnectionData(deviceIdentifier, processedConnection)
                 if (response.isSuccessful) {
@@ -282,6 +234,7 @@ class TelemetryService : Service() {
         }
     }
 
+    //anonymize the data according to user preferences
     private fun anonymizeRequest(request: EntityRequest): EntityRequest {
         var anonymizedRequest = request
 
@@ -291,30 +244,30 @@ class TelemetryService : Service() {
                     // Assume transformToEssentialData is a function that modifies the request to include only essential data
                     headers = "Essential-Header-Data",
                     content = "Essential content has been anonymized",
-                    localIp = "anomimised",
+                    localIp = "randomised",
                     localPort = 0
                     // Potentially more transformations
             )
         }
 
         if (currentAnonymizationType and AnonymizationFlags.INCLUDE_CONTENT != 0) {
-            // Include the full content
+            // Include the preprocessed  content
 
             val preproccesedContent = preprocessContentToJson(request.content)
             Timber.d(preproccesedContent)
             anonymizedRequest = anonymizedRequest.copy(content = preproccesedContent)
         } else if (currentAnonymizationType and AnonymizationFlags.INCLUDE_HEADERS != 0) {
-            // Optionally, handle header inclusion separately if needed
+            //handle header inclusion separately if needed
             anonymizedRequest = anonymizedRequest.copy(headers = request.headers)
         }
 
         // Assuming NOT_ANONYMIZED means returning the request unchanged,
-        // there's no need to explicitly handle it here unless you have additional logic for it.
+        // there's no need to explicitly handle it here
 
         return anonymizedRequest
     }
 
-
+//example of regex preprocessing module for the content field
     fun preprocessContentToJson(jsonContent: String): String {
         // Existing patterns
         val emailPattern = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b".toRegex()
@@ -337,7 +290,6 @@ class TelemetryService : Service() {
                 "name_present" to namePattern.containsMatchIn(jsonContent),
                 "location_present" to (locationPattern.containsMatchIn(jsonContent) || countryPattern.containsMatchIn(jsonContent)),
                 "userInfo_present" to uaPattern.containsMatchIn(jsonContent),
-                // New data fields
                 "device_samsung_present" to devicePattern.containsMatchIn(jsonContent),
                 "bank_data_present" to bankDataPattern.containsMatchIn(jsonContent),
                 "health_data_present" to healthDataPattern.containsMatchIn(jsonContent)
@@ -350,9 +302,9 @@ class TelemetryService : Service() {
 
 
 
-
+//extensible in the future
     private fun anonymizeConnection(connection: EntityConnection): EntityConnection {
-        // Clone or copy the connection to avoid mutating the original object
+
         val anonymizedConnection = connection.copy()
 
 
@@ -363,7 +315,7 @@ class TelemetryService : Service() {
 
 
 
-
+//same logic as in request anonymization
     private fun anonymizeResponse(response: EntityResponse): EntityResponse {
         var anonymizedResponse = response
 

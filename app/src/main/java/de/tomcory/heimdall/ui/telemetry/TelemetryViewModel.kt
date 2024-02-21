@@ -9,15 +9,12 @@ import de.tomcory.heimdall.persistence.database.entity.Response as EntityRespons
 import de.tomcory.heimdall.persistence.database.entity.Connection as EntityConnection
 import kotlinx.coroutines.launch
 
+
+
 class TelemetryViewModel : ViewModel() {
 
     private val db: HeimdallDatabase? = HeimdallDatabase.instance
 
-//    companion object {
-//        const val FULLY_ANONYMIZED = 1 shl 0
-//        const val NO_IP_TIMESTAMPS = 1 shl 1
-//        const val DISCLOSED_CONTENT = 1 shl 2
-//    }
 
     fun createFakeData() {
         viewModelScope.launch {

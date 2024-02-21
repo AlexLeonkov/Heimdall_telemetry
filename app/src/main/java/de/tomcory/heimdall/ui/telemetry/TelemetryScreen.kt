@@ -12,15 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.tomcory.heimdall.Preferences
-import de.tomcory.heimdall.persistence.database.HeimdallDatabase
 import de.tomcory.heimdall.persistence.datastore.PreferencesSerializer
-import de.tomcory.heimdall.ui.database.DatabaseViewModel
 import de.tomcory.heimdall.ui.main.preferencesStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -64,6 +61,8 @@ fun TelemetryScreen(viewModel: TelemetryViewModel = viewModel()) {
             }
         }
 
+        //add new switchOptions here
+        
         // "Essential Data Only" switch
         SwitchOption("Essential Data Only", isEssentialDataOnly) { isChecked ->
             isEssentialDataOnly = isChecked
@@ -80,8 +79,8 @@ fun TelemetryScreen(viewModel: TelemetryViewModel = viewModel()) {
             updateAnonymizationSettings(dataStore, coroutineScope, AnonymizationFlags.INCLUDE_HEADERS, isChecked)
         }
 
-        // "Include Content" switch
-        SwitchOption("Include Content", isIncludeContent) { isChecked ->
+        // "Include preprocessed Content" switch
+        SwitchOption("preprocessed Content", isIncludeContent) { isChecked ->
             isIncludeContent = isChecked
             // Turning on any other option should set "Not Anonymized" to false
             isNotAnonymized = false
@@ -95,10 +94,10 @@ fun TelemetryScreen(viewModel: TelemetryViewModel = viewModel()) {
 }
 @Composable
 fun SwitchOption(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Column {
+
         Text(text = label)
         Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
+
     Spacer(modifier = Modifier.height(10.dp))
 }
 

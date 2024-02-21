@@ -61,9 +61,7 @@ message Preferences {
   repeated string scan_whitelisted_apps = 21;
   // list of blacklisted package names for the ScanManager
   repeated string scan_blacklisted_apps = 22;
-
+  // Combination of user anonymization preferences for export framework
   int32 anonymization_flags = 23;
 
-
-  //todo add new
 }
