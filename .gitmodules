@@ -1,0 +1,6 @@
+[submodule "data_dashboard_app"]
+	path = data_dashboard_app
+	url = https://github.com/AlexLeonkov/data_dashboard_app.git
+[submodule "telemetry-server"]
+	path = telemetry-server
+	url = https://github.com/AlexLeonkov/telemetry-server.git
