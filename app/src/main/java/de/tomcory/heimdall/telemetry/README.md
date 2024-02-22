@@ -13,7 +13,7 @@ The service starts automatically when the application creates it, collecting tel
 
 To make sure that the framework is able to send the data to the server make sure that right IP adress (baseUrl) is set up in Retrofit.Builder()
 
-To adjust new modules new module should be added to AnonymizationFlags object. Additionally logic for new modules handling should be added to anonymization function: anonymizeRequest(); anonymizeResponse();
+To adjust new modules new module should be added to AnonymizationFlags object. Additionally logic for new modules handling should be added to anonymization functions: anonymizeRequest(); anonymizeResponse();
 anonymizeConnection()
 
-Also UI TelemetryScreen.kt should be adjusted to inclule switcher for enabling new module.
+Also UI TelemetryScreen.kt should be adjusted to include switcher for enabling new module.
